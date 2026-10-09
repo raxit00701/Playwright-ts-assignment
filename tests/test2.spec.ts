@@ -45,9 +45,10 @@ for (const data of signupData) {
         // 8. Click Continue button
         await page.getByRole('button', { name: 'Continue' }).click();
 
-        // 9. Verify the confirmation heading is visible
+
+        // 9. Verify the confirmation heading is visible using default assertion timeout
         await expect(
             page.getByRole('heading', { name: 'Please confirm your email to be able to collaborate' })
-        ).toBeVisible({ timeout: 15000 });
+        ).toBeVisible();
     });
 }
