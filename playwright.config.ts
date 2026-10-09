@@ -14,18 +14,20 @@ dotenv.config({
 
 // ── Environment configuration ─────────────────
 
-const BASE_URL = process.env.FUNEX_BASE_URL;
+const BASE_URL = process.env.BASE_URL;
 
 if (!BASE_URL) {
     throw new Error(
-        'FUNEX_BASE_URL is not defined in .env'
+        'BASE_URL is not defined in .env'
     );
 }
 
 // Headless mode is controlled ONLY by .env
 const isHeadless =
-    process.env.FUNEX_HEADLESS?.toLowerCase() === 'true';
+    process.env.HEADLESS?.toLowerCase() === 'true';
 
+
+    
 // ─────────────────────────────────────────────
 //  FULL SCREEN
 // ─────────────────────────────────────────────
@@ -70,6 +72,20 @@ export default defineConfig({
         actionTimeout: 15_000,
         navigationTimeout: 30_000,
     },
+
+  
+// ── ALLURE REPORTER ──────────────────────────
+reporter: [
+    ['list'],
+    [
+        'allure-playwright',
+        {
+            resultsDir: 'allure-results',
+            detail: true,
+            suiteTitle: true,
+        },
+    ],
+],
 
     // ─────────────────────────────────────────
     //  BROWSER PROJECTS
