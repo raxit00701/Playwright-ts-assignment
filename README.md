@@ -12,7 +12,7 @@ This repository contains automated test scripts for critical user flows—specif
 ├── tests/
 │   ├── test1.spec.ts        # Sign Up flow (dynamically generates emails to bypass duplication)
 │   └── test2.spec.ts        # Login & Goals Creation flow
-├── .env.example             # Template for environment variables
+├── .env                     # Template for environment variables
 ├── .gitignore               # Ensures credentials are not pushed to version control
 ├── playwright.config.ts     # Global Playwright configuration
 └── README.md                # Project documentation
