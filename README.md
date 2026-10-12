@@ -14,7 +14,7 @@ The framework is designed with scalability, stability, and maintainability in mi
 ├── data/
 │   └── goal.json             # Test data payload for the goals creation flow
 ├── pages/
-│   └── GoalPage.ts           # Page Object class containing locators and page actions
+│   └── goal.ts           # Page Object class containing locators and page actions
 ├── tests/
 │   ├── generate-auth.spec.ts # Setup script to manually log in and capture session state
 │   └── goal.spec.ts          # Automated Goals Creation test utilizing the saved state
