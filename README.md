@@ -1,6 +1,10 @@
+
+
 # 🧪 Playwright Automation: User Flows
 
-This repository contains automated test scripts for critical user flows—specifically the **Sign Up** and **Login & Goals Creation** scenarios—built using [Playwright](https://www.google.com/search?q=https://playwright.dev/) and TypeScript. The tests are designed to be stable, utilizing reliable locators (roles, placeholders, text) and data-driven techniques for robust execution.
+This repository contains automated test scripts for critical user flows—specifically the **Goals Creation** scenario—built using [Playwright](https://playwright.dev/) and TypeScript.
+
+The framework is designed with scalability, stability, and maintainability in mind, utilizing the **Page Object Model (POM)** design pattern, **Data-Driven Testing (DDT)** via JSON, and **Session State Restoration** to bypass complex authentication blockers.
 
 ---
 
@@ -8,25 +12,47 @@ This repository contains automated test scripts for critical user flows—specif
 
 ```text
 ├── data/
-│   └── signup.json          # Test data for the sign-up flow (roles, names, passwords)
+│   └── goal.json             # Test data payload for the goals creation flow
+├── pages/
+│   └── GoalPage.ts           # Page Object class containing locators and page actions
 ├── tests/
-│   ├── test1.spec.ts        # Sign Up flow (dynamically generates emails to bypass duplication)
-│   └── test2.spec.ts        # Login & Goals Creation flow
-├── .env                     # Template for environment variables
-├── .gitignore               # Ensures credentials are not pushed to version control
-├── playwright.config.ts     # Global Playwright configuration
-└── README.md                # Project documentation
+│   ├── generate-auth.spec.ts # Setup script to manually log in and capture session state
+│   └── goal.spec.ts          # Automated Goals Creation test utilizing the saved state
+├── .env                      # Template for environment variables
+├── auth.json                 # Captured browser session state (Gitignored)
+├── playwright.config.ts      # Global Playwright config (configured with Allure reporting)
+└── README.md                 # Project documentation
 
 ```
 
 ---
 
+## 🧠 Approach & Architecture
+
+### 1. Page Object Model (POM)
+
+To ensure the code is maintainable and DRY (Don't Repeat Yourself), all element locators and action methods (e.g., `fillBasicDetails()`, `configureMasteryCriteria()`) are abstracted into `pages/GoalPage.ts`. The actual test file (`goal.spec.ts`) only contains high-level test logic and assertions, making it highly readable.
+
+### 2. Bypassing Firebase CAPTCHA via Session State
+
+Previously, Firebase CAPTCHA blocked automated login attempts in the staging environment. To solve this without compromising test stability, I implemented **Session State Restoration**:
+
+* A setup script (`generate-auth.spec.ts`) pauses the Playwright execution, allowing a human to log in manually once and solve any CAPTCHAs.
+* Playwright then saves this authenticated session (including IndexedDB data required by Firebase) into an `auth.json` file.
+* The main automation scripts use `test.use({ storageState: 'auth.json' })` to inject this token into the browser context, entirely bypassing the login screen for all subsequent test runs.
+
+### 3. Data-Driven Testing
+
+Test inputs (categories, descriptions, goal numbers, parameters) are decoupled from the test script and stored in `data/goal.json`. This allows for easy updating of test data without altering the core TypeScript logic.
+
+---
+
 ## ⚙️ Prerequisites
 
-Before running the tests, ensure you have the following installed on your machine:
+Before running the tests, ensure you have the following installed:
 
-* **[Node.js](https://www.google.com/search?q=https://nodejs.org/en/download/)** (v16 or higher)
-* **npm** (comes with Node.js) or **yarn**
+* **Node.js** (v16 or higher)
+* **npm** (comes with Node.js)
 
 ---
 
@@ -46,57 +72,67 @@ npx playwright install --with-deps
 
 ```
 
-**3. Configure Environment Variables**
-For security, user credentials are not hardcoded. You must create a `.env` file in the root directory.
+**3. Install Allure Reporter** *(Required for HTML reporting)*
 
-Create a file named `.env` and add the following variables:
-
-```env
-BASE_URL="https://your-staging-environment-url.com"
-EMAIL="your_test_account_email@domain.com"
-PASSWORD="your_secure_password"
+```bash
+npm install -D allure-playwright allure-commandline
 
 ```
 
-> **Note:** The `.env` file is explicitly added to `.gitignore` to prevent sensitive credentials from being committed to the repository.
+**4. Configure Environment Variables**
+Create a file named `.env` in the root directory and add your target environment URL:
+
+```env
+BASE_URL="https://your-staging-environment-url.com"
+HEADLESS="false" 
+
+```
 
 ---
 
 ## 💻 Running the Tests
 
-To execute the Login & Goals Creation flow specifically on the Google Chrome browser engine, run:
+### Step 1: Generate Authentication State (Run Once)
+
+Before running the main tests, you must generate the `auth.json` file. Run the setup script in **headed mode** so you can interact with the browser:
 
 ```bash
-npx playwright test tests/test2.spec.ts --project=chrome
+npx playwright test tests/generate-auth.spec.ts --headed
 
 ```
 
-**Other useful commands:**
+*Playwright will pause on the login screen. Log in manually, bypass the CAPTCHA, and click the "Resume" button in the Playwright Inspector. The script will save your session to `auth.json`.*
 
-* Run all tests in headless mode: `npx playwright test`
-* Run tests in UI mode for debugging: `npx playwright test --ui`
-* View the HTML test report: `npx playwright show-report`
+### Step 2: Run the Automation Suite
+
+Once `auth.json` is generated, you can run the automated flows (which will automatically bypass the login screen):
+
+```bash
+# Run on Chrome
+npx playwright test tests/goal.spec.ts --project=chrome
+
+# Run all tests in UI debugging mode
+npx playwright test --ui
+
+```
 
 ---
 
-## ⚠️ Known Execution Blocker: Firebase CAPTCHA
+## 📊 Reporting
 
-**Important Note for Reviewers:** During execution of the login test (`test2.spec.ts`), the automation may encounter an `auth/captcha-check-failed` error.
+This project uses **Allure** for rich, detailed, and visual test reporting.
 
-**This means Firebase rejected the CAPTCHA verification. This is an authentication environment issue, not a Playwright locator or scripting error.**
+**To generate and view the report after a test run:**
 
-Currently, Firebase CAPTCHA is actively blocking automated logins on the staging environment. While the Playwright script is structurally sound and the locators are correct, execution is blocked by this security layer.
+```bash
+npx allure serve allure-results
 
-**If you are evaluating this assignment:**
+```
 
-1. **The script is fully prepared:** The login logic, explicit waits, and assertions (verifying the logged-in user state) are complete and functional.
-2. **Standard workarounds were evaluated:** Attempting to bypass this by saving a browser session state (`playwright/.auth/user.json`) does not bypass the underlying token validation if Firebase flags the headless browser.
-3. **Best Practice Resolution:** For a true staging QA environment, the recommended fix is to ask the application developer for an approved testing option—such as a dedicated test-authentication flow, a whitelisted testing IP/account, or a supported reCAPTCHA test configuration key (`1x00000000000000000000AA` for testing). Faking CAPTCHA tokens is not a viable or secure automation practice.
-
-Until staging authentication is configured to permit automated QA traffic, the test may timeout or fail at the login assertion.
+*(This will compile the test results and automatically open a beautiful HTML report in your default web browser.)*
 
 ---
 
 **Author:** Raxit Sharma
 
-**Tech Stack:** Playwright | TypeScript | Node.js
+**Tech Stack:** Playwright | TypeScript | Node.js | Page Object Model | Allure
