@@ -11,8 +11,8 @@ const BASE_URL = process.env.BASE_URL!;
 test('Manual Login and Save Session', async ({ page, context }) => {
     await page.goto(BASE_URL);
 
-    console.log('⏸ Playwright is paused. Please log in manually in the browser.');
-    console.log('▶️ Once logged in, click the "Resume" button in the Playwright Inspector window.');
+    console.log('Playwright is paused. Please log in manually in the browser.');
+    console.log(' Once logged in, click the "Resume" button in the Playwright Inspector window.');
 
     // Pause execution to allow you to log in and handle the "Stay Logged In" prompt manually
     await page.pause();
