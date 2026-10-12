@@ -1,0 +1,9 @@
+{
+  "category": "Math",
+  "description": "Student will accurately solve double-digit addition and subtraction problems without a calculator.",
+  "goalNumber": "4",
+  "instructions": "Provide the student with a quiet workspace and standardized worksheets. Ensure no calculators or digital devices are accessible during this exercise.",
+  "goalTypeName": "Academic - Mathematics",
+  "param1": "5",
+  "param2": "10"
+}

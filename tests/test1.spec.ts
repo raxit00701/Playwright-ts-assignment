@@ -1,53 +1,44 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import * as path from 'path';
+import * as fs from 'fs';
 import dotenv from 'dotenv';
+import { GoalPage } from '../page/goal'; // Adjust path depending on your folder structure
 
 dotenv.config({
     path: path.resolve(__dirname, '../.env'),
 });
 
 const BASE_URL = process.env.BASE_URL!;
-const EMAIL = process.env.EMAIL!;
-const PASSWORD = process.env.PASSWORD!;
+
+test.use({ storageState: 'C:\\Projects\\PLAYWRIGHT TS\\auth.json' });
 
 test('Goals Creation', async ({ page }) => {
+    // 1. Read and parse the JSON file
+    const dataPath = path.resolve(__dirname, '../data/goal.json');
+    const goalData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
-    await page.goto(BASE_URL);
+    // 2. Initialize the Page Object
+    const goalPage = new GoalPage(page);
 
-    // Enter email
-    await page.getByPlaceholder('James.musk@email.com')
-        .pressSequentially(EMAIL, { delay: 120 });
-
-    await page.waitForTimeout(800);
-
-    // Click Continue
-    await page.getByText('Continue', { exact: true }).click();
-
-    // Wait for password field
-    await expect(
-        page.getByPlaceholder('Enter your password', { exact: true })
-    ).toBeVisible();
-
-    await page.waitForTimeout(700);
-
-    // Enter password
-    await page.getByPlaceholder('Enter your password', { exact: true })
-        .pressSequentially(PASSWORD, { delay: 120 });
-
-    await page.waitForTimeout(800);
-
-    // Click Continue
-    await page.getByText('Continue', { exact: true }).click();
-
-  if (await page.getByText('Stay Logged In on This Device?').isVisible().catch(() => false)) {
-    await page.getByTestId('dismiss-stay-logged-in').click();
-} else {
-    console.log('Stay logged in prompt not visible, continuing...');
-}
-    // Verify logged-in user
-    await expect(
-        page.getByText('john tester', { exact: true })
-    ).toBeVisible();
-
-    console.log('Login successful: john tester is visible.');
+    // 3. Execute Page Actions sequentially
+    await goalPage.navigate(BASE_URL);
+    await goalPage.verifySuccessfulLogin();
+    
+    await goalPage.navigateToGoalsAndAdd();
+    
+    await goalPage.fillBasicDetails(goalData.category, goalData.description);
+    
+    await goalPage.configureMasteryCriteria();
+    
+    await goalPage.openAdvancedOptionsAndSetNumber(goalData.goalNumber);
+    
+    await goalPage.addFormattedInstructions(goalData.instructions);
+    
+    await goalPage.handleGoalType(goalData.goalTypeName);
+    
+    await goalPage.configureBaselineAndSave(goalData.param1, goalData.param2);
+    
+    // 4. Verify end states
+    await goalPage.verifyGoalCreationSuccess();
+    await goalPage.printGridCells(7); // Checks up to 8 grid cells (index 0 to 7)
 });
