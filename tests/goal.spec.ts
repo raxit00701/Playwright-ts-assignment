@@ -43,7 +43,7 @@ test('Goals Creation', async ({ page }) => {
     
     // 4. Verify end states
     await goalPage.verifyGoalCreationSuccess();
-    await goalPage.printGridCells(7);
+    await goalPage.printGridCells(7); // Checks up to 8 grid cells (index 0 to 7)
     await goalPage.editAndDeleteGoalType();
-    await goalPage.deleteGoal(); // Checks up to 8 grid cells (index 0 to 7)
+    await goalPage.deleteGoal(); 
 });
