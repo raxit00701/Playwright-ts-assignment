@@ -3,14 +3,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import dotenv from 'dotenv';
 import { GoalPage } from '../page/goal'; // Adjust path depending on your folder structure
-
+import testData from '../data/goal.json';
 dotenv.config({
-    path: path.resolve(__dirname, '../.env'),
+      path: path.resolve(__dirname, 'env/.env')
+
 });
 
 const BASE_URL = process.env.BASE_URL!;
 
-test.use({ storageState: 'C:\\Projects\\PLAYWRIGHT TS\\auth.json' });
+test.use({ storageState: './env/auth.json' });
 
 test('Goals Creation', async ({ page }) => {
     // 1. Read and parse the JSON file
@@ -18,10 +19,11 @@ test('Goals Creation', async ({ page }) => {
     const goalData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
     // 2. Initialize the Page Object
-    const goalPage = new GoalPage(page);
+    const goalPage = new GoalPage(page, testData);
 
     // 3. Execute Page Actions sequentially
     await goalPage.navigate(BASE_URL);
+   await page.waitForLoadState('domcontentloaded');
     await goalPage.verifySuccessfulLogin();
     
     await goalPage.navigateToGoalsAndAdd();
@@ -36,9 +38,12 @@ test('Goals Creation', async ({ page }) => {
     
     await goalPage.handleGoalType(goalData.goalTypeName);
     
+    
     await goalPage.configureBaselineAndSave(goalData.param1, goalData.param2);
     
     // 4. Verify end states
     await goalPage.verifyGoalCreationSuccess();
-    await goalPage.printGridCells(7); // Checks up to 8 grid cells (index 0 to 7)
+    await goalPage.printGridCells(7);
+    await goalPage.editAndDeleteGoalType();
+    await goalPage.deleteGoal(); // Checks up to 8 grid cells (index 0 to 7)
 });
