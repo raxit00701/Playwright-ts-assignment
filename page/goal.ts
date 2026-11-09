@@ -10,14 +10,15 @@ export class GoalPage {
     readonly NewGoalButton: Locator;
 
     // Basic Goal Details Locators
-    readonly categoryInput: Locator;
+    readonly titleInput: Locator;
     readonly descriptionInput: Locator;
 
     // Mastery Criteria Locators
     readonly masteryCriterionBtn: Locator;
     readonly switchTrack: Locator;
     readonly masteryDropdown: Locator;
-    readonly onTrackOption: Locator;
+    readonly Goalstatus: Locator;
+    readonly Goalstatuslable: Locator;
 
     // Advanced Options & Instructions Locators
     readonly advancedOptionsText: Locator;
@@ -28,6 +29,7 @@ export class GoalPage {
     readonly boldBtn: Locator;
     readonly italicBtn: Locator;
     readonly underlineBtn: Locator;
+    readonly goalCreationDate: Locator;
 
     // Goal Type Management Locators
     readonly selectGoalTypeBtn: Locator;
@@ -74,19 +76,23 @@ export class GoalPage {
         this.NewGoalButton = page.getByRole('button', { name: 'New', exact: true });
 
         // Basic Goal Details
-        this.categoryInput = page.getByPlaceholder('e.g., Reading, Writing, Math');
+        this.titleInput = page.getByTestId('goal-title-input')
         this.descriptionInput = page.getByPlaceholder('Write goal here..');
 
         // Mastery Criteria
         this.masteryCriterionBtn = page.getByRole('button', { name: 'Mastery Criterion' });
         this.switchTrack = page.getByRole('switch');
         this.masteryDropdown = page.getByTestId('mastery-criteria-section').getByRole('textbox');
-        this.onTrackOption = page.getByText('On track', { exact: true });
+        this.Goalstatus = page.getByText(testData.goalStatus, { exact: true });
+        this.Goalstatuslable = page.locator(`input.mantine-Select-input[readonly][value="${testData.goalStatus}"]`);
+
+
 
         // Advanced Options & Instructions
         this.advancedOptionsText = page.getByText('Advanced Options', { exact: true });
         this.advancedOptionsToggle = page.getByTestId('advanced-options-toggle');
         this.goalNumberInput = page.getByTestId('goal-number-input');
+        this.goalCreationDate = page.getByTestId('date-created-value');
         this.instructionsText = page.getByText('Instructions', { exact: true });
         this.quillEditor = page.locator('[contenteditable="true"][data-placeholder="Write goal instructions here..."]');
         this.boldBtn = page.locator('button:has(svg path[d^="M185.08,114.46"])');
@@ -152,12 +158,12 @@ export class GoalPage {
     // Goal Creation & Configuration
     // =========================================================================
 
-    async fillBasicDetails(category: string, description: string) {
-        await this.categoryInput.fill(category);
-        await this.descriptionInput.fill(description);
-    }
+   async fillBasicDetails(title: string, description: string) {
+    await this.titleInput.fill(title);
+    await this.descriptionInput.fill(description);
+}
 
-    async configureMasteryCriteria() {
+    async configureMasteryCriteria(goalStatus: string)  {
         await this.masteryCriterionBtn.click();
 
         if (await this.switchTrack.isChecked()) {
@@ -166,7 +172,7 @@ export class GoalPage {
 
         await this.advancedOptionsText.scrollIntoViewIfNeeded();
         await this.masteryDropdown.click();
-        await this.onTrackOption.click();
+        await this.Goalstatus.click();
     }
 
     async openAdvancedOptionsAndSetNumber(goalNumber: string) {
@@ -208,6 +214,61 @@ export class GoalPage {
         console.log('Success message displayed: Goal created successfully.');
     }
 
+
+ // -------------------------------------------------   
+// Verification of created Goal with ASSERTIONS
+// -------------------------------------------------
+    async verifyGoalDetails(testData: any) {
+        // 1. Click on Goal Action Menu
+        await this.goalActionMenu.click();
+
+        // 2. Click on Edit Goal menu item
+        await this.editGoalMenuItem.click();
+        // 3. Verify Title input with assertion and print
+        await expect(this.titleInput).toHaveValue(testData.title);
+        console.log('Verified Title:', await this.titleInput.inputValue());
+        // 4. Verify Description input with assertion and print
+        await expect(this.descriptionInput).toHaveValue(testData.description);
+        console.log('Verified Description:', await this.descriptionInput.inputValue());
+        // 5. Click Mastery Criterion button and uncheck switchTrack
+        await this.masteryCriterionBtn.click();
+        if (await this.switchTrack.isChecked()) {
+            await this.switchTrack.setChecked(false, { force: true });
+        }
+        console.log('Switch Track Checked State:', await this.switchTrack.isChecked());
+        // 6 & 7. Scroll to Advanced Options and verify Goal Status
+        await this.advancedOptionsText.scrollIntoViewIfNeeded();
+        await expect(this.Goalstatuslable).toBeVisible();
+        await expect(this.Goalstatuslable).toHaveValue(testData.goalStatus);
+        console.log('Verified Goal Status:', await this.Goalstatuslable.inputValue())
+        // 7. Click on Advanced Options
+        await this.advancedOptionsText.click();
+        // 8. Verify fixed Goal Creation Date on UI (no JSON data needed) and print
+        await expect(this.goalCreationDate).toBeVisible();
+        const createdDate = (await this.goalCreationDate.innerText()).trim();
+        expect(createdDate.length, 'Goal Creation Date should not be empty on UI').toBeGreaterThan(0);
+        console.log('Verified Goal Creation Date (UI):', createdDate);
+        // Scroll down to Instructions text
+        await this.instructionsText.scrollIntoViewIfNeeded();
+         // 10. Verify Goal Number input with assertion and print
+        await expect(this.goalNumberInput).toHaveValue(String(testData.goalNumber));
+        console.log('Verified Goal Number:', await this.goalNumberInput.inputValue());
+        // 9. Verify Quill Editor (Instructions) with assertion and print
+        await expect(this.quillEditor).toHaveText(testData.instructions);
+        console.log('Verified Instructions:', await this.quillEditor.innerText());
+
+        // 11. Scroll down to Baseline Mastery Toggle and click it
+        await this.baselineMasteryToggle.scrollIntoViewIfNeeded();
+        await this.baselineMasteryToggle.click();
+        // 12. Verify Param 1 input with assertion and print
+        await expect(this.param1Input).toHaveValue(String(testData.param1));
+        console.log('Verified Param 1:', await this.param1Input.inputValue());
+        // 13. Verify Param 2 input with assertion and print
+        await expect(this.param2Input).toHaveValue(String(testData.param2));
+        console.log('Verified Param 2:', await this.param2Input.inputValue());
+        // 14. Click Save Goal button
+        await this.saveGoalBtn.click();
+    }
     // =========================================================================
     // Grid Validation, Edit & Deletion Actions
     // =========================================================================
