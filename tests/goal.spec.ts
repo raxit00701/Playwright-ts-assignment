@@ -1,12 +1,12 @@
+
 import { test } from '@playwright/test';
 import * as path from 'path';
-import * as fs from 'fs';
 import dotenv from 'dotenv';
-import { GoalPage } from '../page/goal'; // Adjust path depending on your folder structure
+import { GoalPage } from '../page/goal';
 import testData from '../data/goal.json';
-dotenv.config({
-      path: path.resolve(__dirname, 'env/.env')
 
+dotenv.config({
+    path: path.resolve(__dirname, '../env/.env')
 });
 
 const BASE_URL = process.env.BASE_URL!;
@@ -14,36 +14,45 @@ const BASE_URL = process.env.BASE_URL!;
 test.use({ storageState: './env/auth.json' });
 
 test('Goals Creation', async ({ page }) => {
-    // 1. Read and parse the JSON file
-    const dataPath = path.resolve(__dirname, '../data/goal.json');
-    const goalData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
-    // 2. Initialize the Page Object
+    // Initialize Page Object
     const goalPage = new GoalPage(page, testData);
 
-    // 3. Execute Page Actions sequentially
+    // Navigate and verify login
     await goalPage.navigate(BASE_URL);
-   await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('domcontentloaded');
     await goalPage.verifySuccessfulLogin();
-    
+
+    // Create Goal
     await goalPage.navigateToGoalsAndAdd();
-    
-    await goalPage.fillBasicDetails(goalData.category, goalData.description);
-    
-    await goalPage.configureMasteryCriteria();
-    
-    await goalPage.openAdvancedOptionsAndSetNumber(goalData.goalNumber);
-    
-    await goalPage.addFormattedInstructions(goalData.instructions);
-    
-    await goalPage.handleGoalType(goalData.goalTypeName);
-    
-    
-    await goalPage.configureBaselineAndSave(goalData.param1, goalData.param2);
-    
-    // 4. Verify end states
+
+    await goalPage.fillBasicDetails(
+        testData.title,
+        testData.description
+    );
+
+    await goalPage.configureMasteryCriteria(testData.goalStatus);
+
+    await goalPage.openAdvancedOptionsAndSetNumber(testData.goalNumber);
+
+    await goalPage.addFormattedInstructions(testData.instructions);
+
+    await goalPage.handleGoalType(testData.goalTypeName);
+
+    await goalPage.configureBaselineAndSave(
+        testData.param1,
+        testData.param2
+    );
+
+    // Verify Goal Creation
     await goalPage.verifyGoalCreationSuccess();
-    await goalPage.printGridCells(7); // Checks up to 8 grid cells (index 0 to 7)
+    await goalPage.printGridCells(7);
+    await goalPage.verifyGoalDetails(testData);
+
+    // Edit and Delete
+     
     await goalPage.editAndDeleteGoalType();
-    await goalPage.deleteGoal(); 
+    
+   
+     await goalPage.deleteGoal();
 });
