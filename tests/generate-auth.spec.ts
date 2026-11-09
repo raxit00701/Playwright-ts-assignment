@@ -25,7 +25,7 @@ test('Manual Login and Save Session', async ({ page, context }) => {
     console.log('✅ Login successful: john tester is visible. Saving session...');
 
     // Save the session state to the specified path
-    const authFilePath = 'C:\\Projects\\PLAYWRIGHT TS\\auth.json';
+    const authFilePath = 'env/auth.json';
 
     // @ts-ignore - Suppressing TS error: native Playwright types do not officially support 'indexedDB' 
     // inside storageState, but passing it here as requested for your Firebase setup.
